@@ -39,10 +39,10 @@ for nn=1:numel(class_pos_images(clsNdx).ndx)
         end
         savename = [savedir ids{ii} '_' ids{jj} '.mat'];
         if exist(savename,'file')
-            load([savedir ids{ii} '_' ids{jj} '.mat'], 'maxVal','maxNdx');
+            load(savename, 'maxVal','maxNdx');
             maxVals(:,jj) = maxVal;
             maxNdxs(:,jj) = maxNdx;
-            delete([savedir ids{ii} '_' ids{jj} '.mat']);
+            delete(savename);
             continue;
         end
 
@@ -60,12 +60,10 @@ for nn=1:numel(class_pos_images(clsNdx).ndx)
         %%%%%%%%%%%%%%%%%%%%
         
         [maxVal,maxNdx] = max(sim,[],2);
-        maxNdx = single(maxNdx);
 %         save([savedir ids{ii} '_' ids{jj} '.mat'], 'maxVal','maxNdx');
         maxVals(:,jj) = maxVal;
         maxNdxs(:,jj) = maxNdx;
         [maxVal,maxNdx] = max(sim,[],1);
-        maxNdx = single(maxNdx);
         save([savedir ids{jj} '_' ids{ii} '.mat'], 'maxVal','maxNdx');
 
 %         if count == 100            
