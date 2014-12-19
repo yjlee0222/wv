@@ -22,11 +22,16 @@ end
 
 g = gpuDevice();
 
-numRounds = 100;
-numIdPerRound = ceil(numel(ids)/numRounds);
+numChunk = 100;
+numIdPerRound = ceil(numel(ids)/numChunk);
 
-for kk=1:numRounds    
+for kk=1:numChunk    
 
+    if exist([savedir ids{class_pos_images(clsNdx).ndx(end)} '_chunk' num2str(kk) '.mat'], 'file')
+        fprintf('done with chunk %d/%d\n',kk,numChunk);
+        continue;
+    end
+    
     t1 = tic;
     feats = zeros(200000,9216,'single');
     idNdx = zeros(1,200000,'single');
@@ -43,7 +48,7 @@ for kk=1:numRounds
     for ii=1:numel(class_pos_images(clsNdx).ndx)  
         this_id = class_pos_images(clsNdx).ndx(ii);
         if exist([savedir ids{this_id} '_chunk' num2str(kk) '.mat'], 'file')
-            fprintf('done with im %d/%d\n',ii,numel(class_pos_images(clsNdx).ndx));
+            fprintf('done with im %d/%d, chunk %d/%d\n',ii,numel(class_pos_images(clsNdx).ndx),kk,numChunk);
             continue;
         end
 
@@ -75,7 +80,7 @@ for kk=1:numRounds
 %         g.FreeMemory
         save([savedir ids{this_id} '_chunk' num2str(kk) '.mat'], 'maxVals','maxNdxs');
     end
-    fprintf('done with round %d/%d\n',kk,numRounds);
+    fprintf('done with chunk %d/%d\n',kk,numChunk);
     fprintf('time per pair: %f/%d = %f\n',toc(t1),numel(class_pos_images(clsNdx).ndx)*numIdPerRound,...
         toc(t1)/(numel(class_pos_images(clsNdx).ndx)*numIdPerRound));
 end
