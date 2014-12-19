@@ -30,13 +30,15 @@ for nn=1:numel(class_pos_images(clsNdx).ndx)
     end
     load([featdir ids{ii} '.mat'],'feat');
     feat1 = feat;
-       
+    gfeat1 = gpuArray(feat1);
+    
     maxVals = zeros(size(feat1,1),numel(ids),'single');
     maxNdxs = zeros(size(feat1,1),numel(ids),'single');
     for jj=1:numel(ids)
         if ii==jj
             continue;
         end
+        t1 = tic;
         savename = [savedir ids{ii} '_' ids{jj} '.mat'];
         if exist(savename,'file')
             load(savename, 'maxVal','maxNdx');
@@ -45,25 +47,28 @@ for nn=1:numel(class_pos_images(clsNdx).ndx)
             delete(savename);
             continue;
         end
-
+        fprintf('time to check existing feature: %f\n',toc(t1));
+        
+        t2 = tic;
         load([featdir ids{jj} '.mat'],'feat');
         feat2 = feat;
+        fprintf('time to load feature: %f\n',toc(t2));
         
 %         %%%%%%%%%%%%%%%%%%%%
-%         % CPU        
+%         % CPU   
 %         sim = feat1 * (feat2');
-        %%%%%%%%%%%%%%%%%%%%
+%         %%%%%%%%%%%%%%%%%%%%
         % GPU
-        gfeat1 = gpuArray(feat1);
+        t3 = tic;        
         gfeat2 = gpuArray(feat2');
         sim = gather(gfeat1 * gfeat2);
+        fprintf('time to compute matrix multiplication: %f\n',toc(t3));
         %%%%%%%%%%%%%%%%%%%%
         
-        [maxVal,maxNdx] = max(sim,[],2);
-%         save([savedir ids{ii} '_' ids{jj} '.mat'], 'maxVal','maxNdx');
-        maxVals(:,jj) = maxVal;
-        maxNdxs(:,jj) = maxNdx;
+        t4 = tic;
+        [maxVals(:,jj),maxNdxs(:,jj)] = max(sim,[],2);
         [maxVal,maxNdx] = max(sim,[],1);
+        fprintf('time to find max: %f\n\n',toc(t4));
         save([savedir ids{jj} '_' ids{ii} '.mat'], 'maxVal','maxNdx');
 
 %         if count == 100            
