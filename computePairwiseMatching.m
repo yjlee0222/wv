@@ -82,6 +82,9 @@ for nn=1:numel(class_pos_images(clsNdx).ndx)
               
     fprintf('done with im %d/%d\n',nn,numel(class_pos_images(clsNdx).ndx));
     fprintf('time per pair: %f/%d = %f\n',toc(th),count,toc(th)/count);
+    c = clock;
+    fprintf('%d/%d %d:%02d\n\n',c(2),c(3),c(4),c(5));
+
     count = 0;
     th = tic;
 

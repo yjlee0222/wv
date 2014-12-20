@@ -83,6 +83,8 @@ for kk=1:numChunk
     fprintf('done with chunk %d/%d\n',kk,numChunk);
     fprintf('time per pair: %f/%d = %f\n',toc(t1),numel(class_pos_images(clsNdx).ndx)*numIdPerRound,...
         toc(t1)/(numel(class_pos_images(clsNdx).ndx)*numIdPerRound));
+    c = clock;
+    fprintf('%d/%d %d:%02d\n\n',c(2),c(3),c(4),c(5));
 end
 
 

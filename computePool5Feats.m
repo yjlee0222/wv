@@ -3,7 +3,7 @@ clear;
 addpath('/home/yjlee/Downloads/VOCdevkit/VOCcode');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% setup caffe, rcnn (use alexnet model, not fine-tuned)
+% setup caffe, rcnn (use caffenet model, not fine-tuned)
 cnn_binary_file = '/home/yjlee/Downloads/caffe-master/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel';
 cnn_definition_file = '/home/yjlee/projects/weakVideo/data/pool5.prototxt';
 rcnn_model_pool5 = setup_rcnn_model(cnn_binary_file,cnn_definition_file,true);
