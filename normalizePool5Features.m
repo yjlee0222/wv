@@ -15,8 +15,9 @@ if ~exist(savedir,'dir')
 end
 
 for ii=1:numel(ids)  
-    load([featdir ids{ii} '.mat'],'feat');
+    load([featdir ids{ii} '.mat'],'feat','boxes');
     feat = bsxfun(@times, feat, 1./sqrt(sum(feat.*feat,2)));
-    save([savedir ids{ii} '.mat'],'feat');
+    save([savedir ids{ii} '.mat'],'feat','boxes');
+    
     ii
 end

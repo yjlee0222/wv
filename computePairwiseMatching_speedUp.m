@@ -32,11 +32,15 @@ for kk=1:numChunk
         continue;
     end
     
+    if numIdPerRound*(kk-1)+1 > numel(ids)
+        break;
+    end
+    
     t1 = tic;
     feats = zeros(200000,9216,'single');
     idNdx = zeros(1,200000,'single');
     n = 1;
-    for ii=numIdPerRound*(kk-1)+1:numIdPerRound*kk      
+    for ii=numIdPerRound*(kk-1)+1:min(numIdPerRound*kk,numel(ids))    
         load([featdir ids{ii} '.mat'],'feat');
         feats(n:n+size(feat,1)-1,:) = feat;
         idNdx(n:n+size(feat,1)-1) = ii;
@@ -68,7 +72,7 @@ for kk=1:numChunk
         maxVals = zeros(size(feat,1),numIdPerRound,'single');
         maxNdxs = zeros(size(feat,1),numIdPerRound,'single');
         n = 1;
-        for jj=numIdPerRound*(kk-1)+1:numIdPerRound*kk           
+        for jj=numIdPerRound*(kk-1)+1:min(numIdPerRound*kk,numel(ids))          
             [maxVals(:,n),maxNdxs(:,n)] = max(sim(:,idNdx==jj),[],2);
             n = n + 1;
         end
