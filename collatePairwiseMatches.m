@@ -27,7 +27,9 @@ posLabels(class_pos_images(clsNdx).ndx) = 1;
 
 K = ceil(numel(class_pos_images(clsNdx).ndx)/2);
 % clear img;
-% only keep top M boxes per image
+% for now, due to memory issues,
+% only keep top M selective search windows per image based on pos/neg ratio
+% eventually will only keep even fewer windows (below)
 M = 200;
 posRatio = zeros(numel(class_pos_images(clsNdx).ndx)*M, numel(ids),'uint16');
 imgNdx = zeros(numel(class_pos_images(clsNdx).ndx)*M, numel(ids),'uint16');
@@ -94,9 +96,11 @@ sumPosLabel = sum(posRatio(:,1:K),2);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 clear clusters;
 totClust = 1;
-NUMCLUSTERS = 50;
+NUMCLUSTERS = 100;
 NUMTOPMATCHES = ceil(K/2);
-DEBUG_FLAG = 1;
+NUMBBOXOVERLAP = ceil(K/20);
+BBOXOVERLAP = 0.5;
+DEBUG_FLAG = 0;
 for jj=1:numel(sPLndx)
     if totClust > NUMCLUSTERS
         break;
@@ -120,7 +124,7 @@ for jj=1:numel(sPLndx)
     % check overlap to higher-ranked clusters 
     stopFlag = 0;
     if jj>1
-        [stopFlag] = checkClusterOverlap(clusters,ceil(K/20),0.5);            
+        [stopFlag] = checkClusterOverlap(clusters,NUMBBOXOVERLAP,0.5);            
     end
     if stopFlag == 1
         continue;
@@ -150,6 +154,12 @@ for jj=1:numel(sPLndx)
         pause(0.1);
     end
 end
-% need to save the clusters..
+if ~exist([basedir imgset '/' VOCopts.classes{clsNdx}], 'dir')
+    mkdir([basedir imgset '/' VOCopts.classes{clsNdx}]);
+end
+save([basedir imgset '/' VOCopts.classes{clsNdx} '/' ...
+    'maxNumBboxPerCluster_' num2str(NUMTOPMATCHES) '_numCluster_' num2str(NUMCLUSTERS) ...
+    '_numBboxOverlap_' num2str(NUMBBOXOVERLAP) '_bboxOverlap_' num2str(BBOXOVERLAP) '.mat'], ...
+    'clusters');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
