@@ -1,17 +1,15 @@
-function computeClusterMatches(query_pyra,cnn_model,frame_names,save_dir)
+function computeClusterMatches(feats,h,w,cnn_model,frame_names,save_dir)
+    
+match_vals = zeros(size(feats,1),numel(frame_names),'single');
+match_ndxs = zeros(size(feats,1),numel(frame_names),'uint16');
+     
+tic;
+gfeat1 = gpuArray(feats);
+toc;
 
-% im = imread(frame_names{1843});
-% im = imread(frame_names{25});
-% im = imread(frame_names{700});
-
-cluster_ndx = query_pyra.cluster_ndx;
-group_ndx = query_pyra.group_ndx;
-
+t1 = tic;
 for ii=1:numel(frame_names)
     im = imread(frame_names{ii});
-
-    h = query_pyra.level_sizes(1,1);
-    w = query_pyra.level_sizes(1,2);
     
 %     th = tic;   
     pyra = deep_pyramid(im, cnn_model);
@@ -21,11 +19,28 @@ for ii=1:numel(frame_names)
     pyra = pyramid2Mat(pyra,h,w,1);
 %     fprintf('pyramid2mat took %.3fs\n', toc(th));
 
-    D = query_pyra.Feats'*pyra.featMat;
-    [matchVal,matchNdx] = max(D,[],2);
+    tic; 
+    D1 = feats*pyra.featMat;
+    toc;
     
-    save([save_dir 'cluster' num2str(cluster_ndx) '_group' num2str(group_ndx) '_frame' num2str(ii) '.mat'], ...
-        'matchVal','matchNdx');
+    tic; 
+    gfeat2 = gpuArray(pyra.featMat);
+    D = gather(gfeat1 * gfeat2);
+    toc;
     
-    ii
+    [match_val,match_ndx] = max(D,[],2);
+
+    match_vals(:,ii) = match_val;
+    match_ndxs(:,ii) = uint16(match_ndx);
+    
+    boxes = [pyra.featPos(2,match_ndx); pyra.featPos(1,match_ndx); ...
+            pyra.featPos(2,match_ndx)+w-1; pyra.featPos(1,match_ndx)+h-1; pyra.featLevel(match_ndx)]';  
+        
+    if mod(ii,100)==1    
+        fprintf('done with %d/%d\n\n',ii,numel(frame_names));        
+        hrs_left = (numel(frame_names)-ii)*(toc(t1)/ii)/60/60;
+        fprintf('estimated hrs left: %f\n',hrs_left);
+    end
 end
+
+save([save_dir 'cluster_matches.mat'], 'match_vals','match_ndxs');

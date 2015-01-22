@@ -9,13 +9,13 @@
 void mexFunction(int nlhs, mxArray *plhs[], 
 				 int nrhs, const mxArray *prhs[])
 // rhs (input):
-// featPyra (nr x nc x featdim, single matrix) 
+// featPyra (nr x nc x feat_dim, single matrix) 
 // h (scalar) 
 // w (scalar) 
 // num_region (scalar)
 //
 // lhs (output):
-// featMat (h*w*featdim x num_region, single matrix)
+// featMat (h*w*feat_dim x num_region, single matrix)
 // featPos (2 x num_region, uint16 matrix)
 {        
     /* Check for proper number of input and output arguments */    
@@ -28,42 +28,51 @@ void mexFunction(int nlhs, mxArray *plhs[],
     
 	// parameters
     const mwSize *dims = mxGetDimensions(prhs[0]);  // get number of dims
-    size_t h = mxGetScalar(prhs[1]);
-    size_t w = mxGetScalar(prhs[2]);
-    size_t num_region = mxGetScalar(prhs[3]);
+    int h = mxGetScalar(prhs[1]);
+    int w = mxGetScalar(prhs[2]);
+    int num_region = mxGetScalar(prhs[3]);
 
-    size_t numRow = dims[0];
-    size_t numCol = dims[1];
-    size_t featDim = dims[2];
-    size_t featLength = h*w*featDim;
+    int num_row = dims[0];
+    int num_col = dims[1];
+    int feat_dim = dims[2];
+    int feat_length = h*w*feat_dim;
+
+    //mexPrintf("h=%d, w=%d, num_region=%d, num_row=%d, num_col=%d, feat_dim=%d, feat_length=%d\n", h, w, num_region, num_row, num_col, feat_dim, feat_length);
+
 
 	// output
-    plhs[0] = mxCreateNumericMatrix(featLength, num_region, mxSINGLE_CLASS, mxREAL);
+    plhs[0] = mxCreateNumericMatrix(feat_length, num_region, mxSINGLE_CLASS, mxREAL);    
     plhs[1] = mxCreateNumericMatrix(2, num_region, mxUINT16_CLASS, mxREAL);
+	//plhs[1] = mxCreateNumericMatrix(2, num_region, mxSINGLE_CLASS, mxREAL);
 	
+    //const mwSize *dims_out = mxGetDimensions(plhs[0]);
+    //mexPrintf("h=%d, w=%d\n", dims_out[0], dims_out[1]);
+
 	// set output and input pointers
-    float *featPyra = (float *)mxGetData(prhs[0]);
-	float *featMat = (float *)mxGetData(plhs[0]);
-    unsigned *featPos = (unsigned *)mxGetData(plhs[1]);        
+    float *featPyra = (float *)mxGetPr(prhs[0]);
+	float *featMat = (float *)mxGetPr(plhs[0]);      
+    unsigned short *featPos = (unsigned short *)mxGetPr(plhs[1]);   
+    //float *featPos = (float *)mxGetPr(plhs[1]);        
 
 
     // code
     int region = 0;
     int dimCount, ndx;
-    for (size_t nn=0; nn<numRow-h+1; nn++) {
-        for (size_t mm=0; mm<numCol-w+1; mm++) {              
+    for (int nn=0; nn<num_row-h+1; nn++) {
+        for (int mm=0; mm<num_col-w+1; mm++) {          
             dimCount = 0;
-            for (size_t kk=0; kk<featDim; kk++) {
-                for (size_t jj=mm; jj<mm+w-1; jj++) {
-                    for (size_t ii=nn; ii<nn+h-1; ii++) {
-                        ndx = kk*featDim + jj*numCol + ii;
-                        featMat[region*featLength+dimCount] = featPyra[ndx];
+            for (int kk=0; kk<feat_dim; kk++) {
+                for (int jj=mm; jj<mm+w; jj++) {
+                    for (int ii=nn; ii<nn+h; ii++) {
+                        ndx = kk*(num_row*num_col) + jj*num_row + ii;
+                        featMat[region*feat_length+dimCount] = featPyra[ndx];
                         dimCount++;
+                        //mexPrintf("dimCount=%d, kk=%d, jj=%d, ii=%d\n",dimCount,kk,jj,ii);
                     }
                 }
             }
-            featPos[region*2+1] = nn;
-            featPos[region*2+2] = mm;
+            featPos[region*2] = nn+1;
+            featPos[region*2+1] = mm+1;
 
             region++;
         }

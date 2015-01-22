@@ -16,7 +16,7 @@ if ~exist(savedir,'dir')
     mkdir(savedir);
 end
 
-g = gpuDevice();
+g = gpuDevice(1);
 
 numChunk = 400;
 numIdPerRound = ceil(numel(ids)/numChunk);
