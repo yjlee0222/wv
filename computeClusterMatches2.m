@@ -1,4 +1,4 @@
-function computeClusterMatches(feats,pyra_size,h,w,cnn_model,frame_names,save_prefix)
+function computeClusterMatches2(feats,pyra_size,h,w,cnn_model,frame_names,save_prefix)
     
 frame_ndxs = 1:4:numel(frame_names);
 
@@ -45,4 +45,4 @@ for ii=1:numel(frame_ndxs)
     end
 end
 
-save('-v7.3',[save_prefix '_cluster_matches.mat'], 'match_vals','match_ndxs','boxes','frame_ndxs');
+save('-v7.3',[save_prefix '_cluster_matches_resize.mat'], 'match_vals','match_ndxs','boxes','frame_ndxs');

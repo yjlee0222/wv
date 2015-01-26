@@ -43,7 +43,6 @@ for ii=1:numTracks
         
         trackInfo(frame+1).tracks = [trackInfo(frame+1).tracks; x y trackLabel];
     end
-    ii
 end
 
 colors = 'rgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkw';
