@@ -43,11 +43,13 @@ if ~exist([save_prefix '_cluster_feats_resize.mat'],'file')
     
     clear imgInfo;
     imgInfo(tot_instances).img_id = 0;
+    imgInfo(tot_instances).box = zeros(1,4);
     imgInfo(tot_instances).feat_size = zeros(1,2); 
     count = 1;
     
     imgCount = 0;
     img_ids = zeros(256,1);
+    boxes = zeros(256,4);
     imgs = cell(1,256);
     imgs(:) = {zeros(177,177,3,'uint8')};
     
@@ -67,11 +69,12 @@ if ~exist([save_prefix '_cluster_feats_resize.mat'],'file')
             h = y2-y1+1;
             w = x2-x1+1;
             if h>w 
-                imgs{imgCount} = imresize(I(y1:y2,x1:x2,:), [177 w/h*177]);
+                imgs{imgCount} = imresize(I(y1:y2,x1:x2,:), [177 w*(177/h)]);
             else
-                imgs{imgCount} = imresize(I(y1:y2,x1:x2,:), [h/w*177 177]);
+                imgs{imgCount} = imresize(I(y1:y2,x1:x2,:), [h*(177/w) 177]);
             end            
             img_ids(imgCount) = img_id;
+            boxes(imgCount,:) = bbox;
             
             if (imgCount==256) || (ii==numel(clusters) && jj==numel(clusters(ii).imNdx))
                 query_pyra = deep_pyramid_batch(imgs, cnn_scale_1);
@@ -83,6 +86,7 @@ if ~exist([save_prefix '_cluster_feats_resize.mat'],'file')
                     featMat(:,count) = A(:);
                     
                     imgInfo(count).img_id = img_ids(kk);
+                    imgInfo(count).box = boxes(kk,:);
                     imgInfo(count).feat_size = query_pyra.level_sizes(kk,:);
                 
                     count = count + 1;
@@ -90,6 +94,7 @@ if ~exist([save_prefix '_cluster_feats_resize.mat'],'file')
             
                 imgCount = 0;
                 img_ids = zeros(256,1);
+                boxes = zeros(256,4);
                 imgs(:) = {zeros(177,177,3,'uint8')};    
             end                    
         end
@@ -101,7 +106,7 @@ else
     fprintf([save_prefix 'cluster_feats_resize.mat already exists\n\n']);    
 end
 
-% if ~exist([save_prefix 'cluster_matches_resize.mat'],'file')
+if ~exist([save_prefix 'cluster_matches_resize.mat'],'file')
     load([save_prefix '_cluster_feats_resize.mat'], 'featMat','imgInfo');
     featMat = bsxfun(@times, featMat, 1./sqrt(sum(featMat.*featMat,1)));
     
@@ -118,6 +123,6 @@ end
     cnn_scale_7 = init_cnn_model('use_gpu', true, 'use_caffe', true);
 
     computeClusterMatches2(featMat,pyra_size,h,w,cnn_scale_7,frame_names,save_prefix);
-% else
-%     fprintf([save_prefix 'cluster_matches_resize.mat already exists\n\n']);
-% end
+else
+    fprintf([save_prefix 'cluster_matches_resize.mat already exists\n\n']);
+end

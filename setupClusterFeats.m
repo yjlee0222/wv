@@ -47,7 +47,9 @@ if ~exist([save_prefix '_cluster_feats.mat'],'file')
     featMat = zeros((init_params.MAXDIM+init_params.BUFFER)^2*256, tot_instances, 'single');
     
     clear imgInfo;
-    imgInfo(tot_instances).feat_size = zeros(1,3); 
+    imgInfo(tot_instances).img_id = 0;
+    imgInfo(tot_instances).box = zeros(1,4); 
+    imgInfo(tot_instances).feat_size = zeros(1,3);    
     imgInfo(tot_instances).pyra_scale = 0;
     imgInfo(tot_instances).pyra_level = 0;
     imgInfo(tot_instances).pyra_locs = zeros(1,4); 
@@ -79,6 +81,7 @@ if ~exist([save_prefix '_cluster_feats.mat'],'file')
             end
 
             imgInfo(count).img_id = img_id;
+            imgInfo(count).box = bbox;
             imgInfo(count).feat_size = model.feat_size;
             imgInfo(count).pyra_scale = model.pyra_scale;
             imgInfo(count).pyra_level = model.pyra_level;
@@ -101,7 +104,7 @@ else
     fprintf([save_prefix 'cluster_feats.mat already exists\n\n']);    
 end
 
-% if ~exist([save_prefix 'cluster_matches.mat'],'file')
+if ~exist([save_prefix 'cluster_matches.mat'],'file')
     load([save_prefix '_cluster_feats.mat'], 'featMat','imgInfo','missed_ndx');
     featMat = bsxfun(@times, featMat, 1./sqrt(sum(featMat.*featMat,1)));
     featMat(:,missed_ndx) = 0;
@@ -114,6 +117,6 @@ end
     w = init_params.MAXDIM+init_params.BUFFER;
 
     computeClusterMatches(featMat,pyra_size,h,w,cnn_scale_7,frame_names,save_prefix);
-% else
-%     fprintf([save_prefix 'cluster_matches.mat already exists\n\n']);
-% end
+else
+    fprintf([save_prefix 'cluster_matches.mat already exists\n\n']);
+end
