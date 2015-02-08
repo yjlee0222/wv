@@ -1,7 +1,7 @@
 clear;
 
-datadir = '/home/SSD1/yjlee-data/projects/weakVideo/YouTube-Objects/car/data/';
-fid = fopen([datadir '0001/shots/001/BroxMalikResults/Tracks201.dat']);
+
+fid = fopen(['/home/SSD1/yjlee-data/projects/weakVideo/YouTube-Objects/car/data/0001/shots/OchsBroxMalik/Results/OchsBroxMalik8_all_0000060.00/001/Tracks201.dat']);
 A = textscan(fid, '%f');
 A = A{1};
 fclose(fid);
@@ -31,7 +31,7 @@ end
 
 colors = 'rgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkw';
 for ii=1:numFrames
-    I = imread([datadir '0001/shots/001/frame' sprintf('%04d',ii) '.jpg']);
+    I = imread(['/home/SSD1/yjlee-data/projects/weakVideo/YouTube-Objects/car/data/0001//shots/001/frame' sprintf('%04d',ii) '.jpg']);
     
     uniqueTrackLabels = unique(trackInfo(ii).tracks(:,3));
     
