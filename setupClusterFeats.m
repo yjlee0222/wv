@@ -22,9 +22,9 @@ NUMTOPMATCHES = ceil(K/2);
 NUMBBOXOVERLAP = ceil(K/20);
 BBOXOVERLAP = 0.5;
 
-g = gpuDevice(2);
+g = gpuDevice(1);
 
-device_id = 1;
+device_id = 0;
 caffe('set_device', device_id);
 cnn_scale_7 = init_cnn_model('use_gpu', true, 'use_caffe', true);
 
@@ -37,6 +37,8 @@ save_prefix = [basedir imgset '/' VOCopts.classes{clsNdx} '/' ...
     '_numBboxOverlap_' num2str(NUMBBOXOVERLAP) '_bboxOverlap_' num2str(BBOXOVERLAP)];
 
 if ~exist([save_prefix '_cluster_feats.mat'],'file')
+    fprintf(['computing cluster features...\n']);  
+    
     load([save_prefix '.mat'], 'clusters');
 
     tot_instances = 0;
@@ -54,7 +56,8 @@ if ~exist([save_prefix '_cluster_feats.mat'],'file')
     imgInfo(tot_instances).pyra_level = 0;
     imgInfo(tot_instances).pyra_locs = zeros(1,4); 
     imgInfo(tot_instances).missed = 0;
-
+    imgInfo(tot_instances).cluster_id = 0;
+    
     count = 1; 
     missed_ndx = []; 
     tic;
@@ -87,24 +90,24 @@ if ~exist([save_prefix '_cluster_feats.mat'],'file')
             imgInfo(count).pyra_level = model.pyra_level;
             imgInfo(count).pyra_locs = model.pyra_locs; 
             imgInfo(count).missed = missed;
-
+            imgInfo(count).cluster_id = ii;
+            
             fprintf('done with cluster %d: %d/%d\n\n',ii, jj,numel(clusters(ii).imNdx));
             count = count + 1;
         end
     end
     fprintf('total time: %f\n',toc);
     fprintf('total missed: %d\n\n',numel(missed_ndx));
-
-    save_prefix = [basedir imgset '/' VOCopts.classes{clsNdx} '/' ...
-        'maxNumBboxPerCluster_' num2str(NUMTOPMATCHES) '_numCluster_' num2str(NUMCLUSTERS) ...
-        '_numBboxOverlap_' num2str(NUMBBOXOVERLAP) '_bboxOverlap_' num2str(BBOXOVERLAP)];
-
+    
     save('-v7.3',[save_prefix '_cluster_feats.mat'], 'featMat','imgInfo','missed_ndx');
 else
     fprintf([save_prefix 'cluster_feats.mat already exists\n\n']);    
 end
 
-if ~exist([save_prefix 'cluster_matches.mat'],'file')
+% if ~exist([save_prefix 'cluster_matches.mat'],'file')
+    fprintf(['computing cluster matches...\n']); 
+    tt = tic;
+    
     load([save_prefix '_cluster_feats.mat'], 'featMat','imgInfo','missed_ndx');
     featMat = bsxfun(@times, featMat, 1./sqrt(sum(featMat.*featMat,1)));
     featMat(:,missed_ndx) = 0;
@@ -116,7 +119,11 @@ if ~exist([save_prefix 'cluster_matches.mat'],'file')
     h = init_params.MAXDIM+init_params.BUFFER;
     w = init_params.MAXDIM+init_params.BUFFER;
 
-    computeClusterMatches(featMat,pyra_size,h,w,cnn_scale_7,frame_names,save_prefix);
-else
-    fprintf([save_prefix 'cluster_matches.mat already exists\n\n']);
-end
+%     computeClusterMatches(featMat,pyra_size,h,w,cnn_scale_7,frame_names,save_prefix,0);
+    % match to mirrored frame
+    computeClusterMatches(featMat,pyra_size,h,w,cnn_scale_7,frame_names,save_prefix,1);
+    
+    toc(tt);
+% else
+%     fprintf([save_prefix 'cluster_matches.mat already exists\n\n']);
+% end

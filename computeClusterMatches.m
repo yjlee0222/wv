@@ -1,4 +1,4 @@
-function computeClusterMatches(feats,pyra_size,h,w,cnn_model,frame_names,save_prefix)
+function computeClusterMatches(feats,pyra_size,h,w,cnn_model,frame_names,save_prefix,mirror)
     
 frame_ndxs = 1:4:numel(frame_names);
 
@@ -11,6 +11,9 @@ gfeat1 = gpuArray(feats');
 t1 = tic;
 for ii=1:numel(frame_ndxs)
     im = imread(frame_names{frame_ndxs(ii)});
+    if mirror==1
+        im = flipdim(im,2);
+    end
     
 %     th = tic;   
     pyra = deep_pyramid(im, cnn_model);
@@ -45,4 +48,8 @@ for ii=1:numel(frame_ndxs)
     end
 end
 
-save('-v7.3',[save_prefix '_cluster_matches.mat'], 'match_vals','match_ndxs','boxes','frame_ndxs');
+if mirror==0
+    save('-v7.3',[save_prefix '_cluster_matches.mat'], 'match_vals','match_ndxs','boxes','frame_ndxs');
+elseif mirror==1
+    save('-v7.3',[save_prefix '_cluster_matches_mirror.mat'], 'match_vals','match_ndxs','boxes','frame_ndxs');  
+end
