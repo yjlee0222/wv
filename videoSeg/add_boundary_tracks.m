@@ -8,11 +8,17 @@ fclose(fid);
 height = size(I,1);
 width = size(I,2);
 
+col_ndx = 5:8:width;
+col_ndx = col_ndx([1 end]);
+% col_ndx = col_ndx([1:2 end-1:end]);
+row_ndx = 5:8:height;
+row_ndx = row_ndx([1 end]);
+% row_ndx = row_ndx([1:2 end-1:end]);
+
 numFrames = A(1);
-numTracks = A(2)+length(5:8:width)*2+length(5:8:height)*2;
+numTracks = A(2)+length(5:8:width)*length(col_ndx)+length(5:8:height)*length(row_ndx);
 
 fid = fopen([filename(1:end-4) '_bdry.dat'],'w');
-
 fprintf(fid,'%d %d\n',numFrames,numTracks);
 nn = 3;
 for ii=1:A(2)    
@@ -27,11 +33,6 @@ end
 
 trackLabel = 1000;
 trackLength = numFrames;
-
-col_ndx = 5:8:width;
-col_ndx = col_ndx([1 end]);
-row_ndx = 5:8:height;
-row_ndx = row_ndx([1 end]);
 
 for x=5:8:width
     for y=row_ndx  

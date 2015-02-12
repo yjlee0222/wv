@@ -1,16 +1,13 @@
 clear;
-
-% add tracks to boundary as a hack to try to fix densification
+close all;
 
 datadir = '/home/SSD1/yjlee-data/projects/weakVideo/YouTube-Objects/car/data/';
 
-resize_factor = 1/4; %1/4
+resize_factor = 1/4; %1/2
 sample_rate = 8;
 
-% resize_factor = 1; %1/4
-% sample_rate = 8;
-% subdir = '/shots/OchsBroxMalik/Results/OchsBroxMalik8_all_0000060.00/';
-subdir = ['/shots_' num2str(resize_factor) '/OchsBroxMalik/Results/OchsBroxMalik' num2str(sample_rate) '_all_0000060.00/'];
+subdir1 = ['/shots_' num2str(resize_factor) '/OchsBroxMalik/Results/OchsBroxMalik' num2str(sample_rate) '_all_0000060.00/'];
+subdir2 = ['/shots_0.5/OchsBroxMalik/Results/OchsBroxMalik' num2str(sample_rate) '_all_0000060.00/'];
 
 se1 = strel('square',2);
 se2 = strel('square',5);
@@ -18,7 +15,7 @@ se2 = strel('square',5);
 d = dir(datadir);
 d = d(3:end);
 
-for ii=9%numel(d)
+for ii=1:numel(d)
     dd = dir([datadir d(ii).name '/shots']);
     dd = dd(3:end);
 
@@ -32,17 +29,17 @@ for ii=9%numel(d)
             continue;
         end            
 
-        dense_imgs1 = dir([datadir d(ii).name subdir dd(jj).name '/DenseSegmentation/*dense.ppm']);    
-        overlay_imgs1 = dir([datadir d(ii).name subdir dd(jj).name '/DenseSegmentation/*overlay.ppm']);    
-        dense_imgs2 = dir([datadir d(ii).name subdir dd(jj).name '/DenseSegmentation_bdry/*dense.ppm']);    
-        overlay_imgs2 = dir([datadir d(ii).name subdir dd(jj).name '/DenseSegmentation_bdry/*overlay.ppm']);    
-        sparse_imgs = dir([datadir d(ii).name subdir dd(jj).name '/SparseSegmentation/*.ppm']);    
-        for kk=1:numel(dense_imgs1)            
-            dense_img1 = imread([datadir d(ii).name subdir dd(jj).name '/DenseSegmentation/' dense_imgs1(kk).name]);
-            overlay_img1 = imread([datadir d(ii).name subdir dd(jj).name '/DenseSegmentation/' overlay_imgs1(kk).name]);
-            dense_img2 = imread([datadir d(ii).name subdir dd(jj).name '/DenseSegmentation_bdry/' dense_imgs2(kk).name]);
-            overlay_img2 = imread([datadir d(ii).name subdir dd(jj).name '/DenseSegmentation_bdry/' overlay_imgs2(kk).name]);
-            sparse_img = imread([datadir d(ii).name subdir dd(jj).name '/SparseSegmentation/' sparse_imgs(kk).name]);
+        dense_imgs1 = dir([datadir d(ii).name subdir1 dd(jj).name '/DenseSegmentation_bdry/*dense.ppm']);    
+        overlay_imgs1 = dir([datadir d(ii).name subdir1 dd(jj).name '/DenseSegmentation_bdry/*overlay.ppm']);    
+        dense_imgs2 = dir([datadir d(ii).name subdir2 dd(jj).name '/DenseSegmentation_bdry/*dense.ppm']);    
+        overlay_imgs2 = dir([datadir d(ii).name subdir2 dd(jj).name '/DenseSegmentation_bdry/*overlay.ppm']);    
+        sparse_imgs = dir([datadir d(ii).name subdir2 dd(jj).name '/SparseSegmentation/*.ppm']);    
+        for kk=1:numel(sparse_imgs)            
+            dense_img1 = imread([datadir d(ii).name subdir1 dd(jj).name '/DenseSegmentation_bdry/' dense_imgs1(kk).name]);
+            overlay_img1 = imread([datadir d(ii).name subdir1 dd(jj).name '/DenseSegmentation_bdry/' overlay_imgs1(kk).name]);
+            dense_img2 = imread([datadir d(ii).name subdir2 dd(jj).name '/DenseSegmentation_bdry/' dense_imgs2(kk).name]);
+            overlay_img2 = imread([datadir d(ii).name subdir2 dd(jj).name '/DenseSegmentation_bdry/' overlay_imgs2(kk).name]);
+            sparse_img = imread([datadir d(ii).name subdir2 dd(jj).name '/SparseSegmentation/' sparse_imgs(kk).name]);
             
             figure(1); clf; 
             subplot(2,3,1); imshow(overlay_img1);
@@ -65,7 +62,7 @@ for ii=9%numel(d)
             sparse_img_small = max(sparse_img_small,[],3);
             
             unique_labels = unique(sparse_img_small);
-            unique_labels(unique_labels==0) = []
+            unique_labels(unique_labels==0) = [];
             
             label_num = 1;
             final_sparse_img_small = zeros(size(sparse_img_small));

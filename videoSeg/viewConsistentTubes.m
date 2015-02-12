@@ -1,9 +1,16 @@
 clear;
+close all;
 
 datadir = '/home/SSD1/yjlee-data/projects/weakVideo/YouTube-Objects/car/data/';
 
 resize_factor = 1/4; %1/4
 sample_rate = 8;
+colors = ['rgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkw' ...
+    'rgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkw' ...
+    'rgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkw' ...
+    'rgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkw' ...
+    'rgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkw' ...
+    'rgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkw'];
 
 subdir = ['/shots_' num2str(resize_factor) '/OchsBroxMalik/Results/OchsBroxMalik' num2str(sample_rate) '_all_0000060.00/'];
 
@@ -14,7 +21,7 @@ for ii=9%numel(d)
     dd = dir([datadir d(ii).name '/shots']);
     dd = dd(3:end);
 
-    for jj=1:numel(dd)
+    for jj=4:numel(dd)
         video_dir = [datadir d(ii).name '/shots/' dd(jj).name '/'];
         ddd = dir([video_dir '*.jpg']);
         num_images = numel(ddd);
@@ -31,7 +38,8 @@ for ii=9%numel(d)
         for kk=1:numel(tracks)
             overlay_img = imread([datadir d(ii).name subdir dd(jj).name '/DenseSegmentation_bdry/' overlay_imgs(kk).name]);
             figure(1); clf; 
-            imshow(overlay_img);   
+            imshow(overlay_img);  
+            tracks(kk).consistent
             for mm=1:numel(tracks(kk).consistent)
                 if tracks(kk).consistent(mm)
                     x1 = tracks(kk).bbox_info(mm,1);
@@ -43,7 +51,7 @@ for ii=9%numel(d)
                     line([x1 x1 x2 x2 x1]',[y1 y2 y2 y1 y1]','color',colors(color_ndx),'linewidth',4);
                 end
             end  
-            pause;
+            pause(0.03);
         end
     end
 end

@@ -1,10 +1,14 @@
-function tracks = getConsistentTubes(tracks,check_tube_length)
+function tracks = getConsistentTubes(tracks,check_tube_length,overlap_tresh)
 
 % addpath('/home/yjlee/projects/weakVideo/misc');
 
 if nargin<2
     check_tube_length = 3; % 1 before and 1 after (make this odd)
 end
+if nargin <3
+    overlap_tresh = 0.6;
+end
+
 num_frames = numel(tracks);
 
 before_after_length = floor(check_tube_length/2);
@@ -36,13 +40,13 @@ for ii=1:num_frames
                 check(kk,count) = 0;
             else
                 overlaps = computeOverlap(boxes(kk,:), this_boxes(match,:));
-                if max(overlaps)>0.5
+                if max(overlaps)>overlap_tresh
                     check(kk,count) = 1;
                 end
             end
         end
         count = count + 1;
     end
-    
+
     tracks(ii).consistent = (sum(check,2)==size(check,2));
 end

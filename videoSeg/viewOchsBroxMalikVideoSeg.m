@@ -1,4 +1,5 @@
 clear;
+close all;
 
 % add tracks to boundary as a hack to try to fix densification
 
