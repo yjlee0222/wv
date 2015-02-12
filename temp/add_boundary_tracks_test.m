@@ -59,7 +59,9 @@ for y=5:8:height
 end
 fclose(fid);
 
-fid = fopen([datadir '0001/shots/001/BroxMalikResults/Tracks201_copy.dat']);
+% fid = fopen([datadir '0001/shots/001/BroxMalikResults/Tracks201_copy.dat']);
+fid = fopen([datadir '0009/shots_0.25/OchsBroxMalik/Results/OchsBroxMalik8_all_0000060.00/001/Tracks134_bdry.dat']);
+
 A = textscan(fid, '%f');
 A = A{1};
 fclose(fid);
@@ -89,7 +91,8 @@ end
 
 colors = 'rgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkwrgbycmkw';
 for ii=1:numFrames
-    I = imread([datadir '0001/shots/001/frame' sprintf('%04d',ii) '.jpg']);
+%     I = imread([datadir '0001/shots/001/frame' sprintf('%04d',ii) '.jpg']);
+    I = imread([datadir '0009/shots/001/frame' sprintf('%04d',ii) '.jpg']);
     
     uniqueTrackLabels = unique(trackInfo(ii).tracks(:,3));
     
