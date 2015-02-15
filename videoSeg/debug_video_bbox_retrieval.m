@@ -81,8 +81,8 @@ for imNdx = 1:numel(imgInfo)
        
 %         dense_seg = imread([datadir video_name subdir shot_name '/DenseSegmentation_bdry/' frame_name '_dense.ppm']);
 %         tube_bbox = getTubeBbox(dense_seg);
-%         tube_bbox = tube_bbox./resize_factor;
-        
+%         tube_bbox = (tube_bbox-1)./resize_factor+1;
+
         figure(3); clf;
         clear tracks;
         nn = 1;

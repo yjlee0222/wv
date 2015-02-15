@@ -6,7 +6,7 @@ addpath('/home/yjlee/projects/weakVideo/misc');
 VOCinit;
 
 % car = 7
-% clsNdx = 1;
+% clsNdx = 7;
 
 imgset = 'trainval';
 ids = textread(sprintf(VOCopts.imgsetpath,imgset),'%s');
@@ -160,9 +160,15 @@ end
 if ~exist([basedir imgset '/' VOCopts.classes{clsNdx}], 'dir')
     mkdir([basedir imgset '/' VOCopts.classes{clsNdx}]);
 end
+
+param.NUMTOPMATCHES = NUMTOPMATCHES;
+param.NUMCLUSTERS = NUMCLUSTERS;
+param.NUMBBOXOVERLAP = NUMBBOXOVERLAP;
+param.BBOXOVERLAP = BBOXOVERLAP;
+
 save([basedir imgset '/' VOCopts.classes{clsNdx} '/' ...
     'maxNumBboxPerCluster_' num2str(NUMTOPMATCHES) '_numCluster_' num2str(NUMCLUSTERS) ...
     '_numBboxOverlap_' num2str(NUMBBOXOVERLAP) '_bboxOverlap_' num2str(BBOXOVERLAP) '.mat'], ...
-    'clusters');
+    'clusters','param');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
