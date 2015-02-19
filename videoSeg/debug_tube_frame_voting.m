@@ -31,15 +31,27 @@ file_prefix = [basedir imgset '/' VOCopts.classes{clsNdx} '/' ...
     '_numBboxOverlap_' num2str(NUMBBOXOVERLAP) '_bboxOverlap_' num2str(BBOXOVERLAP)];
 
 load([file_prefix '_cluster_feats.mat'], 'imgInfo','missed_ndx');
-load([file_prefix '_cluster_matches.mat'], 'match_vals','boxes','frame_ndxs');
-frame_names = frame_names(frame_ndxs);
+mirror = 1;
+if mirror==0
+    load([file_prefix '_cluster_matches.mat'], 'match_vals','boxes','frame_ndxs');
+    frame_names = frame_names(frame_ndxs); 
+    tic;
+    frame = voteOnVideoFrameBbox(frame_names,boxes,match_vals,datadir,subdir,resize_factor,PYRASTRIDE,0);
+    toc;
+elseif mirror==1
+    load([file_prefix '_cluster_matches_mirror.mat'], 'match_vals','boxes','frame_ndxs');
+    frame_names = frame_names(frame_ndxs);
+    tic;
+    frame = voteOnVideoFrameBbox(frame_names,boxes,match_vals,datadir,subdir,resize_factor,PYRASTRIDE,1);
+    toc;
+end
 
-tic;
-frame = voteOnVideoFrameBbox(frame_names,boxes,match_vals,datadir,subdir,resize_factor,PYRASTRIDE);
-toc;
 
 for ii=1:numel(frame_names)
-    img = imread(frame_names{ii});     
+    img = imread(frame_names{ii}); 
+    if mirror==1
+        img = flipdim(img,2);
+    end
     [~,max_ndx] = max(frame(ii).tube_bbox_weight);
     tube_bbox = frame(ii).tube_bbox;
     

@@ -1,9 +1,12 @@
-function frame_bbox = voteOnVideoFrameBbox(frame_names,boxes,match_vals,datadir,subdir,resize_factor,PYRASTRIDE)
+function frame_bbox = voteOnVideoFrameBbox(frame_names,boxes,match_vals,datadir,subdir,resize_factor,PYRASTRIDE,mirror)
 
 clear frame_bbox;
 for ii=1:numel(frame_names)   
     [video_name,shot_name,frame_name] = parseFrameName(datadir,frame_names{ii});
     dense_seg = imread([datadir video_name subdir shot_name '/DenseSegmentation_bdry/' frame_name '_dense.ppm']);
+    if mirror==1
+        dense_seg = flipdim(dense_seg,2);
+    end    
     tube_bbox = getTubeBbox(dense_seg);
     tube_bbox = (tube_bbox-1)./resize_factor+1;
 

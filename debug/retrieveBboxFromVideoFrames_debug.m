@@ -1,3 +1,4 @@
+% function setupClusterFeats(clusters,cnn_model,VOCopts,ids)
 clear;
 
 addpath('/home/yjlee/projects/weakVideo/misc/');
@@ -8,8 +9,6 @@ addpath('/home/yjlee/projects/weakVideo/external/MeanShift/');
 resize_factor = 1/4; %1/2
 sample_rate = 8;
 subdir = ['/shots_' num2str(resize_factor) '/OchsBroxMalik/Results/OchsBroxMalik' num2str(sample_rate) '_all_0000060.00/'];
-bandWidth = 100;
-num_match = 20;
 
 VOCinit;
 clsNdx = 7;
@@ -19,11 +18,6 @@ ids = textread(sprintf(VOCopts.imgsetpath,imgset),'%s');
 cls = VOCopts.classes{clsNdx};
 frame_names = getFrames(cls);
 datadir = ['/home/SSD1/yjlee-data/projects/weakVideo/YouTube-Objects/' cls '/data/'];
-
-clear pseudo_gt;
-pseudo_gt.bbox = cell(1,numel(ids));
-pseudo_gt.cluster_size = zeros(1,numel(ids));
-pseudo_gt.cls = cls;
 
 basedir = '/home/SSD1/yjlee-data/projects/weakVideo/PASCAL2007/';
 load([basedir imgset 'class_pos_images.mat'], 'class_pos_images');
@@ -52,7 +46,7 @@ ld2 = load([file_prefix '_cluster_matches_mirror.mat'], 'match_vals','boxes','fr
 ld2.frame_names = frame_names(ld2.frame_ndxs);
 ld2.frame_bbox = voteOnVideoFrameBbox(ld2.frame_names,ld2.boxes,ld2.match_vals,datadir,subdir,resize_factor,PYRASTRIDE,1);
 
-% frame_names = [ld1.frame_names' ld2.frame_names'];
+frame_names = [ld1.frame_names' ld2.frame_names'];
 frame_bbox = [ld1.frame_bbox ld2.frame_bbox];
 match_vals = [ld1.match_vals ld2.match_vals];
 boxes = [ld1.boxes ld2.boxes];
@@ -70,6 +64,16 @@ for ii=1:size(boxes,1)
     boxes(ii,:,:) = boxes(ii,sorted_ndx(ii,:),:);
 end
 
+% load([file_prefix '_cluster_matches_mirror.mat'], 'match_vals','boxes','frame_ndxs');  
+% frame_names = frame_names(frame_ndxs);
+% frame_bbox = voteOnVideoFrameBbox(frame_names,boxes,match_vals,datadir,subdir,resize_factor,PYRASTRIDE,1);
+% match_vals(missed_ndx,:) = [];
+% [match_vals, sorted_ndx] = sort(match_vals,2,'descend');
+% boxes(missed_ndx,:,:) = [];
+% for ii=1:size(boxes,1)
+%     boxes(ii,:,:) = boxes(ii,sorted_ndx(ii,:),:);
+% end
+
 img_ids = [imgInfo.img_id];
 unique_img_ids = unique(img_ids);
 for ii=1:numel(unique_img_ids)    
@@ -77,6 +81,10 @@ for ii=1:numel(unique_img_ids)
     query_img = imread(imgpath);
     query_width = size(query_img,2);
     query_height = size(query_img,1);
+    
+%     figure(1); clf; axis tight; axis off; 
+%     set(gca,'Position',[0 0 1 1]); % Make the axes occupy the whole figure
+%     imshow(query_img);
 
     this_img_ids = find(img_ids==unique_img_ids(ii));
     retrieved_bboxes = [];
@@ -87,7 +95,12 @@ for ii=1:numel(unique_img_ids)
         query_im_box = (pyra_locs-1)*query_scale+1; 
         query_weight = numel(clusters(imgInfo(this_img_ids(jj)).cluster_id).imNdx)/NUMTOPMATCHES;
         
-        for kk=1:num_match
+%         figure(1); 
+%         hold on;
+%         rectangle('Position', [query_im_box(1) query_im_box(2) query_im_box(3)-query_im_box(1)+1 query_im_box(4)-query_im_box(2)+1], 'EdgeColor','c','LineWidth',3);
+%         hold off;
+        
+        for kk=1:5
             pyra_box = squeeze(boxes(this_img_ids(jj),kk,:))';      
             scale = PYRASTRIDE/pyra_box(end);
             im_box = (pyra_box(1:4)-1)*scale+1;
@@ -97,6 +110,15 @@ for ii=1:numel(unique_img_ids)
                 error('something wrong')
             end
             
+%             figure(2); clf; axis tight; axis off; 
+%             set(gca,'Position',[0 0 1 1]); % Make the axes occupy the whole figure
+%             img = imread(frame_names{sorted_ndx(this_img_ids(jj),kk)}); 
+%             if mirror_flag(sorted_ndx(this_img_ids(jj),kk))==1
+%                 img = flipdim(img,2);
+%             end
+%             imshow(img); title(mirror_flag(sorted_ndx(this_img_ids(jj),kk))); %title(match_vals(imNdx,ii));
+%             rectangle('Position', [im_box(1) im_box(2) im_box(3)-im_box(1)+1 im_box(4)-im_box(2)+1], 'EdgeColor','c','LineWidth',3);
+
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % get automatically computed bounding box from video frame
             % get bbox with most votes (for now; could change to
@@ -113,14 +135,30 @@ for ii=1:numel(unique_img_ids)
                 if overlaps(mm)>0.05
                     retrieved_bbox = query_im_box + (tube_bbox(mm,1:4)-im_box)*query_scale/scale;
                     retrieved_bboxes = [retrieved_bboxes; retrieved_bbox];
-                    retrieved_bboxes_weight = [retrieved_bboxes_weight; query_weight];                  
+                    retrieved_bboxes_weight = [retrieved_bboxes_weight; query_weight];
+                    
+%                     figure(2);
+%                     rectangle('Position', [tube_bbox(mm,1) tube_bbox(mm,2) tube_bbox(mm,3)-tube_bbox(mm,1)+1 tube_bbox(mm,4)-tube_bbox(mm,2)+1], 'EdgeColor','y','LineWidth',3);
+% %                     title(overlaps(mm));
+%                     
+%                     figure(1); 
+%                     hold on;
+%                     rectangle('Position', [query_im_box(1) query_im_box(2) query_im_box(3)-query_im_box(1)+1 query_im_box(4)-query_im_box(2)+1], 'EdgeColor','c','LineWidth',3);
+%                     rectangle('Position', [retrieved_bbox(1) retrieved_bbox(2) retrieved_bbox(3)-retrieved_bbox(1)+1 retrieved_bbox(4)-retrieved_bbox(2)+1], 'EdgeColor','y','LineWidth',3);       
+%                     hold off;
+%                 else
+%                     figure(2);
+%                     rectangle('Position', [tube_bbox(mm,1) tube_bbox(mm,2) tube_bbox(mm,3)-tube_bbox(mm,1)+1 tube_bbox(mm,4)-tube_bbox(mm,2)+1], 'EdgeColor','w','LineWidth',3);
+% %                     title(overlaps(mm));
                 end   
+%                 pause;
             end
         end        
     end
     
     % could do mean shift per retrieval (which would allow multiple dets
     % per image)
+    bandWidth = 100;
     [clustCent,data2cluster,cluster2dataCell] = MeanShiftCluster(retrieved_bboxes',bandWidth);
     cluster_size = cellfun(@numel,cluster2dataCell,'UniformOutput',true);
     [max_cluster_size,max_cluster_ndx] = max(cluster_size);
@@ -130,11 +168,46 @@ for ii=1:numel(unique_img_ids)
         clustCent(2,:) = max(clustCent(2,:),1);
         clustCent(3,:) = min(clustCent(3,:),size(query_img,2));
         clustCent(4,:) = min(clustCent(4,:),size(query_img,1));
-        
-        pseudo_gt.bbox{unique_img_ids(ii)} = [clustCent(1:4,max_cluster_ndx)]';
-        pseudo_gt.cluster_size(unique_img_ids(ii)) = max_cluster_size;
     end
+    
+    figure(1); clf; axis tight; axis off; 
+    set(gca,'Position',[0 0 1 1]); % Make the axes occupy the whole figure
+    subplot(1,2,1); imshow(query_img); title(max_cluster_size)
+    hold on;
+    for jj=1:size(clustCent,2)
+        if jj==max_cluster_ndx
+            rectangle('Position', [clustCent(1,jj) clustCent(2,jj) clustCent(3,jj)-clustCent(1,jj)+1 clustCent(4,jj)-clustCent(2,jj)+1], 'EdgeColor','y','LineWidth',6);   
+        else
+            rectangle('Position', [clustCent(1,jj) clustCent(2,jj) clustCent(3,jj)-clustCent(1,jj)+1 clustCent(4,jj)-clustCent(2,jj)+1], 'EdgeColor','w','LineWidth',3,'LineStyle','--');               
+        end
+    end
+    hold off;
+    
+    
+    [clustCent,data2cluster,cluster2dataCell] = MeanShiftClusterWeightedPts(retrieved_bboxes',(retrieved_bboxes_weight.^10)',bandWidth);
+    cluster_size = cellfun(@numel,cluster2dataCell,'UniformOutput',true);
+    [max_cluster_size,max_cluster_ndx] = max(cluster_size);    
+    
+    if ~isempty(clustCent)
+        clustCent(1,:) = max(clustCent(1,:),1);
+        clustCent(2,:) = max(clustCent(2,:),1);
+        clustCent(3,:) = min(clustCent(3,:),size(query_img,2));
+        clustCent(4,:) = min(clustCent(4,:),size(query_img,1));
+    end
+    
+    subplot(1,2,2); imshow(query_img); title(max_cluster_size)
+    hold on;
+    for jj=1:size(clustCent,2)
+        if jj==max_cluster_ndx
+            rectangle('Position', [clustCent(1,jj) clustCent(2,jj) clustCent(3,jj)-clustCent(1,jj)+1 clustCent(4,jj)-clustCent(2,jj)+1], 'EdgeColor','y','LineWidth',6);   
+        else
+            rectangle('Position', [clustCent(1,jj) clustCent(2,jj) clustCent(3,jj)-clustCent(1,jj)+1 clustCent(4,jj)-clustCent(2,jj)+1], 'EdgeColor','w','LineWidth',3,'LineStyle','--');               
+        end
+    end
+    hold off;
+    
+    pause;
 end
 
-save([file_prefix '_pseudo_gt_num_match=' num2str(num_match) '_mirrored.mat'], 'pseudo_gt');
+
 
