@@ -1,30 +1,23 @@
 % function setupClusterFeats(clusters,cnn_model,VOCopts,ids)
 clear;
 
+clsNdx = 3;
+device_id = 1;
+
 addpath('/home/yjlee/projects/weakVideo/misc/');
 addpath('/home/yjlee/Downloads/caffe-master/matlab/caffe/');
 addpath('/home/yjlee/Downloads/DeepPyramid/');
 addpath('/home/yjlee/Downloads/VOCdevkit/VOCcode');
 
 VOCinit;
-clsNdx = 7;
 imgset = 'trainval';
 ids = textread(sprintf(VOCopts.imgsetpath,imgset),'%s');
 
 cls = VOCopts.classes{clsNdx};
-frame_names = getFrames(cls);
+param = setupParams(clsNdx,VOCopts);
+save_prefix = param.file_prefix;
 
-basedir = '/home/SSD1/yjlee-data/projects/weakVideo/PASCAL2007/';
-load([basedir imgset 'class_pos_images.mat'], 'class_pos_images');
-K = ceil(numel(class_pos_images(clsNdx).ndx)/2);
-NUMCLUSTERS = 100;
-NUMTOPMATCHES = ceil(K/2);
-NUMBBOXOVERLAP = ceil(K/20);
-BBOXOVERLAP = 0.5;
-
-g = gpuDevice(1);
-
-device_id = 0;
+g = gpuDevice(device_id+1);
 caffe('set_device', device_id);
 cnn_scale_7 = init_cnn_model('use_gpu', true, 'use_caffe', true);
 
@@ -32,12 +25,9 @@ init_params.MAXDIM = 12;
 init_params.BUFFER = 3;
 init_params.goal_ncells = 48;
     
-save_prefix = [basedir imgset '/' VOCopts.classes{clsNdx} '/' ...
-    'maxNumBboxPerCluster_' num2str(NUMTOPMATCHES) '_numCluster_' num2str(NUMCLUSTERS) ...
-    '_numBboxOverlap_' num2str(NUMBBOXOVERLAP) '_bboxOverlap_' num2str(BBOXOVERLAP)];
 
 if ~exist([save_prefix '_cluster_feats.mat'],'file')
-    fprintf(['computing cluster features...\n']);  
+    fprintf('computing cluster features for %s\n', cls);  
     
     load([save_prefix '.mat'], 'clusters');
 
@@ -45,7 +35,8 @@ if ~exist([save_prefix '_cluster_feats.mat'],'file')
     for ii=1:numel(clusters)
         tot_instances = tot_instances + numel(clusters(ii).imNdx);
     end
-
+%     tot_instances = numel(cat(1,clusters.imNdx));
+    
     featMat = zeros((init_params.MAXDIM+init_params.BUFFER)^2*256, tot_instances, 'single');
     
     clear imgInfo;
@@ -67,8 +58,7 @@ if ~exist([save_prefix '_cluster_feats.mat'],'file')
             imgpath = sprintf(VOCopts.imgpath,ids{img_id});
             I = imread(imgpath); 
 
-            bbox = clusters(ii).boxes(jj,:);
-    %         x1 = bbox(1); y1 = bbox(2); x2 = bbox(3); y2 = bbox(4);
+            bbox = clusters(ii).boxes(jj,:); % [x1 y1 x2 y2]
 
             model = initialize_goalsize_exemplar(I, bbox, cnn_scale_7, init_params);
 
@@ -104,26 +94,26 @@ else
     fprintf([save_prefix 'cluster_feats.mat already exists\n\n']);    
 end
 
-% if ~exist([save_prefix 'cluster_matches.mat'],'file')
-    fprintf(['computing cluster matches...\n']); 
-    tt = tic;
-    
-    load([save_prefix '_cluster_feats.mat'], 'featMat','imgInfo','missed_ndx');
-    featMat = bsxfun(@times, featMat, 1./sqrt(sum(featMat.*featMat,1)));
-    featMat(:,missed_ndx) = 0;
-    
-    pyra_size = zeros(numel(imgInfo),2,'uint16');
-    for ii=1:numel(imgInfo)
-        pyra_size(ii,:) = imgInfo(ii).feat_size(1:2);          
-    end
-    h = init_params.MAXDIM+init_params.BUFFER;
-    w = init_params.MAXDIM+init_params.BUFFER;
-
+% % if ~exist([save_prefix 'cluster_matches.mat'],'file')
+%     fprintf('computing cluster matches for %s\n', cls); 
+%     tt = tic;
+%     
+%     load([save_prefix '_cluster_feats.mat'], 'featMat','imgInfo','missed_ndx');
+%     featMat = bsxfun(@times, featMat, 1./sqrt(sum(featMat.*featMat,1)));
+%     featMat(:,missed_ndx) = 0;
+%     
+%     pyra_size = zeros(numel(imgInfo),2,'uint16');
+%     for ii=1:numel(imgInfo)
+%         pyra_size(ii,:) = imgInfo(ii).feat_size(1:2);          
+%     end
+%     h = init_params.MAXDIM+init_params.BUFFER;
+%     w = init_params.MAXDIM+init_params.BUFFER;
+% 
 %     computeClusterMatches(featMat,pyra_size,h,w,cnn_scale_7,frame_names,save_prefix,0);
-    % match to mirrored frame
-    computeClusterMatches(featMat,pyra_size,h,w,cnn_scale_7,frame_names,save_prefix,1);
-    
-    toc(tt);
-% else
-%     fprintf([save_prefix 'cluster_matches.mat already exists\n\n']);
-% end
+%     % match to mirrored frame
+% %     computeClusterMatches(featMat,pyra_size,h,w,cnn_scale_7,frame_names,save_prefix,1);
+%     
+%     toc(tt);
+% % else
+% %     fprintf([save_prefix 'cluster_matches.mat already exists\n\n']);
+% % end

@@ -1,5 +1,5 @@
 function model = initialize_goalsize_exemplar(I, bbox, cnn_model, init_params)
-%% Initialize the exemplar (or scene) such that the representation
+% Initialize the exemplar (or scene) such that the representation
 % which tries to choose a region which overlaps best with the given
 % bbox and contains roughly init_params.goal_ncells cells, with a
 % maximum dimension of init_params.MAXDIM

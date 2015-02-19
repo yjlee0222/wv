@@ -1,6 +1,6 @@
 function computeClusterMatches(feats,pyra_size,h,w,cnn_model,frame_names,save_prefix,mirror)
     
-frame_ndxs = 1:4:numel(frame_names);
+frame_ndxs = 1:4:numel(frame_names); % sample every 4th frame
 
 match_vals = zeros(size(feats,2),numel(frame_ndxs),'single');
 match_ndxs = zeros(size(feats,2),numel(frame_ndxs),'uint16');
